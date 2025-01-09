@@ -1,0 +1,37 @@
+package routes
+
+import (
+	"neon-api/db"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/jackc/pgx/v5"
+)
+
+// Creamos la funcion que manejará las peticiones del cliente, "conn" permite conectar con la base de datos
+func SetupRoutes(app *fiber.App, conn *pgx.Conn) {
+
+	//Middleware
+	app.Use(logger.New())
+
+	//------------------------Peticiones GET---------------------------
+	// Ruta "/"
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("¡Bienvenido al servidor Fiber!") })
+
+	// Ruta de ejemplo para la base de datos
+	app.Get("/db", func(c *fiber.Ctx) error { return c.SendString("Aquí irán las operaciones con la base de datos") })
+
+	// Ruta para consultar el último registro ingresado en una tabla especifica
+	app.Get("/db/last-record", func(c *fiber.Ctx) error { return db.LastRecordHandler(c, conn) })
+
+	// Ruta find user
+	app.Get("/db/find-user/:user_id", func(c *fiber.Ctx) error { return db.FindUserHandler(c, conn) })
+
+	// Ruta test
+	app.Get("/db/test", func(c *fiber.Ctx) error { return db.PostTest(c, conn) })
+	// Ruta para borrar una tabla especifico
+	app.Get("/db/drop", func(c *fiber.Ctx) error { return db.DropTable(conn) })
+
+	// ------------------------Peticiones POST ------------------------
+	app.Post("/db/create/user", func(c *fiber.Ctx) error { return db.CreateUser(c, conn) })
+}
