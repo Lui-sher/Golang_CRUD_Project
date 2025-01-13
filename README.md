@@ -1,6 +1,6 @@
-# Golang_CRUD_Proyect
+# Golang_CRUD_Project
 
-Golang CRUD Proyect (Neon-API)
+Golang CRUD Project (Neon-API)
 
 En este proyecto pondremos en practica lo aprendido sobre el lenguaje Go.
 
