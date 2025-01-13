@@ -33,12 +33,14 @@ func SetupDatabase(conn *pgx.Conn) error {
 	}
 
 	query := `
-		CREATE TABLE IF NOT EXISTS users(
-			record SERIAL PRIMARY KEY,
-			user_id VARCHAR(10) UNIQUE DEFAULT SUBSTRING(REPLACE(gen_random_uuid()::TEXT, '-', ''), 1, 10),
-			name TEXT NOT NULL,
-			email TEXT NOT NULL
-	);`
+	CREATE TABLE IF NOT EXISTS users (
+		record SERIAL PRIMARY KEY,
+		user_id VARCHAR(10) UNIQUE DEFAULT SUBSTRING(REPLACE(gen_random_uuid()::TEXT, '-', ''), 1, 10),
+		name TEXT NOT NULL,
+		email TEXT NOT NULL,
+		is_test BOOLEAN
+	);
+`
 
 	if _, err := conn.Exec(context.Background(), query); err != nil {
 		panic(err)
@@ -57,7 +59,7 @@ func LastRecord(conn *pgx.Conn) (*variables.User, error) {
 	var user variables.User // Crear un puntero a una estructura de User
 
 	// Escanear la fila obtenida
-	err := row.Scan(&user.Record, &user.User_Id, &user.Name, &user.Email)
+	err := row.Scan(&user.Record, &user.User_Id, &user.Name, &user.Email, &user.Is_test)
 	if err != nil {
 		return nil, fmt.Errorf("error al obtener el último registro: %w", err)
 	}
@@ -84,15 +86,6 @@ func LastRecordHandler(c *fiber.Ctx, conn *pgx.Conn) error {
 func CreateUser(c *fiber.Ctx, conn *pgx.Conn) error {
 	var user variables.User
 
-	// ---------------- Testing ------------------
-	if c.Path() == "/db/test" {
-
-		user.Name = fmt.Sprintf("Usuario de prueba %d", variables.Count)
-		user.Email = fmt.Sprintf("usuarioDePrueba%d@prueba.com", variables.Count)
-		goto saltoTest
-	}
-	//--------------------------------------------
-
 	if err := c.BodyParser(&user); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid JSON",
@@ -106,28 +99,29 @@ func CreateUser(c *fiber.Ctx, conn *pgx.Conn) error {
 		})
 	}
 
-saltoTest:
 	query := `
-        INSERT INTO users (name, email)
-        VALUES ($1, $2)
+        INSERT INTO users (name, email, is_test)
+        VALUES ($1, $2, $3)
 		RETURNING user_id;
     `
 
 	// Ejecutar la consulta POST
-	if err := conn.QueryRow(context.Background(), query, user.Name, user.Email).Scan(&user.User_Id); err != nil {
+	if err := conn.QueryRow(context.Background(), query, user.Name, user.Email, user.Is_test).Scan(&user.User_Id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to insert user into the database",
 		})
 	}
 	fmt.Println("Datos insertados exitosamente")
 
+	variables.ResMap = map[string]string{
+		"message": "Data inserted successfully",
+		"user_id": user.User_Id,
+		"name":    user.Name,
+		"email":   user.Email,
+	}
+
 	// Responder al cliente con éxito
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message":    "Data inserted successfully",
-		"user_id":    user.User_Id,
-		"user_name":  user.Name,
-		"user_email": user.Email,
-	})
+	return c.Status(fiber.StatusCreated).JSON(variables.ResMap)
 }
 
 // Funcion para encontar a user

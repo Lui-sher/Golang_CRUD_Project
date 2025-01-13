@@ -8,8 +8,9 @@ type User struct {
 	User_Id string
 	Name    string `json:"name"`
 	Email   string `json:"email"`
+	Is_test bool
 }
 
 var Count = 0
-
-var UserID string
+var ResMap map[string]string
+var StoreUsersId = make([]string, 3)

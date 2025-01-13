@@ -45,13 +45,8 @@ func ConnectDB() (*pgx.Conn, error) {
 		panic(err)
 	}
 
-	// Agregamos datos de prueba a la tabla
-	// if err := InsertTestData(conn); err != nil {
-	// 	panic(err)
-	// }
-
 	// Verificamos los datos ingresados
-	if err := FetchDataTest(conn); err != nil {
+	if err := FetchAllData(conn); err != nil {
 		panic(err)
 	}
 

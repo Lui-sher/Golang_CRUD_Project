@@ -9,20 +9,49 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// Pasos para testear la base de datos
+// ---------------- Pasos para testear la base de datos -------------------
+
+// PostTest crea tres nuevos registros de usuarios en la base de datos
 func PostTest(c *fiber.Ctx, conn *pgx.Conn) error {
 
 	for i := 0; i < 3; i++ {
-		variables.Count = i
-		CreateUser(c, conn)
+		c.Request().SetBody([]byte(fmt.Sprintf(`{
+		"name": "Usuario de prueba %d",
+		"email": "usuarioDePrueba%d@prueba.com",
+		"is_test": true
+		}`, i+1, i+1)))
+		if err := CreateUser(c, conn); err != nil {
+			return err
+		}
 	}
-
-	FetchDataTest(conn)
+	if err := FetchAllData(conn); err != nil {
+		return err
+	}
 	return nil
 }
 
-// FetchDataTest recupera los datos de la tabla y los imprime.
-func FetchDataTest(conn *pgx.Conn) error {
+// GetTest, consulta y muestra todos los registros creados por la funcion PostTest
+func GetTest(conn *pgx.Conn) error {
+
+	return nil
+}
+
+func ShowRowsInTerminal(rows pgx.Rows) error {
+
+	fmt.Printf("%6s |%10s   |%13s         |%17s\n", "Record", "User_Id", "Name", "Email")
+	fmt.Println("-------+-------------+----------------------+----------------------------")
+	for rows.Next() {
+		var user variables.User
+		if err := rows.Scan(&user.Record, &user.User_Id, &user.Name, &user.Email, &user.Is_test); err != nil {
+			return fmt.Errorf("error escaneando fila: %w", err)
+		}
+		fmt.Printf("%4d   | %11s | %20s | %27s \n", user.Record, user.User_Id, user.Name, user.Email)
+	}
+	return nil
+}
+
+// FetchDataTest recupera los datos de la tabla y los muestra por consola.
+func FetchAllData(conn *pgx.Conn) error {
 	query := `SELECT * FROM users`
 	rows, err := conn.Query(context.Background(), query)
 	if err != nil {
@@ -30,14 +59,9 @@ func FetchDataTest(conn *pgx.Conn) error {
 	}
 	defer rows.Close()
 
-	fmt.Printf("%6s |%10s   |%13s         |%17s\n", "Record", "User_Id", "Name", "Email")
-	fmt.Println("-------+-------------+----------------------+----------------------------")
-	for rows.Next() {
-		var user variables.User
-		if err := rows.Scan(&user.Record, &user.User_Id, &user.Name, &user.Email); err != nil {
-			return fmt.Errorf("error escaneando fila: %w", err)
-		}
-		fmt.Printf("%4d   | %11s | %20s | %27s \n", user.Record, user.User_Id, user.Name, user.Email)
+	if err := ShowRowsInTerminal(rows); err != nil {
+		return fmt.Errorf("Algo salió mal: %w", err)
 	}
+
 	return nil
 }

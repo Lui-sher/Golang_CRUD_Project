@@ -16,7 +16,7 @@ func SetupRoutes(app *fiber.App, conn *pgx.Conn) {
 
 	//------------------------Peticiones GET---------------------------
 	// Ruta "/"
-	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("¡Bienvenido al servidor Fiber!") })
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("¡Bienvenido al servidor Principal!") })
 
 	// Ruta de ejemplo para la base de datos
 	app.Get("/db", func(c *fiber.Ctx) error { return c.SendString("Aquí irán las operaciones con la base de datos") })
@@ -28,7 +28,9 @@ func SetupRoutes(app *fiber.App, conn *pgx.Conn) {
 	app.Get("/db/find-user/:user_id", func(c *fiber.Ctx) error { return db.FindUserHandler(c, conn) })
 
 	// Ruta test
-	app.Get("/db/test", func(c *fiber.Ctx) error { return db.PostTest(c, conn) })
+	app.Get("/db/post/test", func(c *fiber.Ctx) error { return db.PostTest(c, conn) })
+	app.Get("/db/get/test", func(c *fiber.Ctx) error { return db.GetTest(conn) })
+
 	// Ruta para borrar una tabla especifico
 	app.Get("/db/drop", func(c *fiber.Ctx) error { return db.DropTable(conn) })
 
