@@ -14,12 +14,12 @@ import (
 // PostTest crea tres nuevos registros de usuarios en la base de datos
 func PostTest(c *fiber.Ctx, conn *pgx.Conn) error {
 
-	for i := 0; i < 3; i++ {
-		c.Request().SetBody([]byte(fmt.Sprintf(`{
+	for i := range 3 {
+		c.Request().SetBody(fmt.Appendf(nil, `{
 		"name": "Usuario de prueba %d",
 		"email": "usuarioDePrueba%d@prueba.com",
 		"is_test": true
-		}`, i+1, i+1)))
+		}`, i+1, i+1))
 		if err := CreateUser(c, conn); err != nil {
 			return err
 		}
@@ -31,7 +31,33 @@ func PostTest(c *fiber.Ctx, conn *pgx.Conn) error {
 }
 
 // GetTest, consulta y muestra todos los registros creados por la funcion PostTest
-func GetTest(conn *pgx.Conn) error {
+func GetTest(conn *pgx.Conn) error { // In Process...
+	query := `SELECT * FROM users WHERE is_test = TRUE`
+	rows, err := conn.Query(context.Background(), query)
+	if err != nil {
+		return fmt.Errorf("error consultando datos: %w", err)
+	}
+	defer rows.Close()
+
+	if err := ShowRowsInTerminal(rows); err != nil {
+		return fmt.Errorf("algo salió mal: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteTest: elimina todos los registros creados por la funcion PostTest
+func DeleteTest(conn *pgx.Conn) error {
+	query := `DELETE FROM users WHERE is_test = TRUE`
+
+	// Ejecutar la consulta
+	cmdTag, err := conn.Exec(context.Background(), query)
+	if err != nil {
+		return fmt.Errorf("error eliminando datos: %w", err)
+	}
+
+	// Mostrar cuántas filas se eliminaron
+	fmt.Printf("Se eliminaron %d registros de prueba de la tabla 'users'.\n", cmdTag.RowsAffected())
 
 	return nil
 }
@@ -60,7 +86,7 @@ func FetchAllData(conn *pgx.Conn) error {
 	defer rows.Close()
 
 	if err := ShowRowsInTerminal(rows); err != nil {
-		return fmt.Errorf("Algo salió mal: %w", err)
+		return fmt.Errorf("algo salió mal: %w", err)
 	}
 
 	return nil

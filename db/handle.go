@@ -87,8 +87,12 @@ func CreateUser(c *fiber.Ctx, conn *pgx.Conn) error {
 	var user variables.User
 
 	if err := c.BodyParser(&user); err != nil {
+		fmt.Println("Raw body:", string(c.Body()))
+		fmt.Println("Content-Type:", c.Get("Content-Type"))
+
+		fmt.Println("Error parsing JSON:", err) // verás algo como: "json: cannot unmarshal string into Go struct field User.age of type int"
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid JSON",
+			"error": err.Error(),
 		})
 	}
 
@@ -156,4 +160,11 @@ func FindUserHandler(c *fiber.Ctx, conn *pgx.Conn) error {
 		"name":    user.Name,
 		"email":   user.Email,
 	})
+}
+
+func DeleteUserHandler(c *fiber.Ctx, conn *pgx.Conn) error {
+
+	// in development...
+
+	return nil
 }

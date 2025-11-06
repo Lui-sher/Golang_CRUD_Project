@@ -1,14 +1,14 @@
 package variables
 
-// Creamos una varible del tipo Struct con la inicial en mayuscula para
+// Creamos una varible del tipo Struct con la letra inicial en mayuscula para
 // poder exportar y tener acceso a ello desde cualquier archivo
 
 type User struct {
-	Record  int32
-	User_Id string
+	Record  int32  `json:"record"`
+	User_Id string `json:"user_id"`
 	Name    string `json:"name"`
 	Email   string `json:"email"`
-	Is_test bool
+	Is_test bool   `json:"is_test"`
 }
 
 var Count = 0

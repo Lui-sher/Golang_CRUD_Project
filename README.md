@@ -29,7 +29,7 @@ Rutas definidas para interaccion con el cliente desde la web:
                 //"¡Bienvenido al servidor Principal!"
 
 :PORT/db    
-            ->  Solicituda a la ruta Pricipal de la base de datos
+            ->  Solicitud a la ruta Pricipal de la base de datos
                 //"Aquí irán las operaciones con la base de datos"
 
 :PORT/db/last-record
@@ -53,6 +53,7 @@ Rutas definidas para interaccion con el cliente desde la web:
 
                 Esta peticion le retorná al cliente un JSON con los datos
                 completos generados en la tabla con el siguiente formato:
+                
                 {
                     "email": "fulano@email.com",
                     "message": "Data inserted successfully",
