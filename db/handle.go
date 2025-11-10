@@ -2,8 +2,9 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"neon-api/variables"
+	"neon-api/models"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5"
@@ -51,12 +52,12 @@ func SetupDatabase(conn *pgx.Conn) error {
 }
 
 // LastRecord consulta el ultimo registro ingresado en la tabla 'users'
-func LastRecord(conn *pgx.Conn) (*variables.User, error) {
+func LastRecord(conn *pgx.Conn) (*models.User, error) {
 
 	query := `SELECT * FROM users ORDER BY record DESC LIMIT 1;`
 	row := conn.QueryRow(context.Background(), query)
 
-	var user variables.User // Crear un puntero a una estructura de User
+	var user models.User // Crear un puntero a una estructura de User
 
 	// Escanear la fila obtenida
 	err := row.Scan(&user.Record, &user.User_Id, &user.Name, &user.Email, &user.Is_test)
@@ -82,15 +83,15 @@ func LastRecordHandler(c *fiber.Ctx, conn *pgx.Conn) error {
 	})
 }
 
-// Función Creadora de nuevos usuarios
+// Función creadora de nuevos usuarios
 func CreateUser(c *fiber.Ctx, conn *pgx.Conn) error {
-	var user variables.User
+	var user models.User
 
 	if err := c.BodyParser(&user); err != nil {
 		fmt.Println("Raw body:", string(c.Body()))
 		fmt.Println("Content-Type:", c.Get("Content-Type"))
 
-		fmt.Println("Error parsing JSON:", err) // verás algo como: "json: cannot unmarshal string into Go struct field User.age of type int"
+		fmt.Println("Error parsing JSON:", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -106,36 +107,32 @@ func CreateUser(c *fiber.Ctx, conn *pgx.Conn) error {
 	query := `
         INSERT INTO users (name, email, is_test)
         VALUES ($1, $2, $3)
-		RETURNING user_id;
+		RETURNING record, user_id;
     `
 
 	// Ejecutar la consulta POST
-	if err := conn.QueryRow(context.Background(), query, user.Name, user.Email, user.Is_test).Scan(&user.User_Id); err != nil {
+	if err := conn.QueryRow(context.Background(), query, user.Name, user.Email, user.Is_test).Scan(&user.Record, &user.User_Id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to insert user into the database",
 		})
 	}
-	fmt.Println("Datos insertados exitosamente")
-
-	variables.ResMap = map[string]string{
-		"message": "Data inserted successfully",
-		"user_id": user.User_Id,
-		"name":    user.Name,
-		"email":   user.Email,
-	}
+	fmt.Println("User created successfully")
 
 	// Responder al cliente con éxito
-	return c.Status(fiber.StatusCreated).JSON(variables.ResMap)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":      "User created successfully",
+		"user created": user,
+	})
 }
 
 // Funcion para encontar a user
-func FindUser(conn *pgx.Conn, userId string) (*variables.User, error) {
+func FindUser(conn *pgx.Conn, userId string) (*models.User, error) {
 
 	query := "SELECT record, user_id, name, email FROM users WHERE user_id = $1;"
-	row := conn.QueryRow(context.Background(), query, userId)
+	rows := conn.QueryRow(context.Background(), query, userId)
 
-	var user variables.User
-	err := row.Scan(&user.Record, &user.User_Id, &user.Name, &user.Email)
+	var user models.User
+	err := rows.Scan(&user.Record, &user.User_Id, &user.Name, &user.Email)
 	if err != nil {
 		return nil, fmt.Errorf("error al obtener el usuario con user_id %s: %v", userId, err)
 	}
@@ -154,17 +151,36 @@ func FindUserHandler(c *fiber.Ctx, conn *pgx.Conn) error {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
+	fmt.Printf("User %s, successfully found!\n", userId)
+
 	return c.JSON(fiber.Map{
-		"Record":  user.Record,
-		"User_Id": user.User_Id,
-		"name":    user.Name,
-		"email":   user.Email,
+		"menssage": "User successfully found",
+		"user":     user,
 	})
 }
 
 func DeleteUserHandler(c *fiber.Ctx, conn *pgx.Conn) error {
 
-	// in development...
+	userId := c.Params("user_id")
+	query := "DELETE FROM users WHERE user_id = $1 RETURNING record, user_id, name, email, is_test;"
 
-	return nil
+	var user models.User
+	err := conn.QueryRow(context.Background(), query, userId).Scan(&user.Record, &user.User_Id, &user.Name, &user.Email, &user.Is_test)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "User not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Error ejecutando la consulta: %v", err),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":      "User deleted successfully",
+		"user deleted": user,
+	})
+
 }

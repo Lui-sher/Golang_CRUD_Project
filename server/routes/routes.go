@@ -14,7 +14,7 @@ func SetupRoutes(app *fiber.App, conn *pgx.Conn) {
 	//Middleware
 	app.Use(logger.New())
 
-	//------------------------ Peticiones GET-------------------------------------------------
+	//------------------------- Peticiones GET-------------------------------------------------
 	// Ruta "/"
 	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("¡Wellcome to Main Page!") })
 
@@ -31,9 +31,9 @@ func SetupRoutes(app *fiber.App, conn *pgx.Conn) {
 	app.Post("/db/create/user", func(c *fiber.Ctx) error { return db.CreateUser(c, conn) })
 
 	// -----------------------  Peticiones DELETE  ----------------------------------------
-	app.Delete("/db/find-user/:user_id", func(c *fiber.Ctx) error { return db.DeleteUserHandler(c, conn) })
+	app.Delete("/db/delete-user/:user_id", func(c *fiber.Ctx) error { return db.DeleteUserHandler(c, conn) })
 
-	// ------------------------ Tester Routes ---------------------------------------------
+	// ------------------------ Testing Routes ---------------------------------------------
 	// PostTest: Crear 3 nuevos registros automaticamente
 	app.Get("/db/post/test", func(c *fiber.Ctx) error { return db.PostTest(c, conn) })
 
@@ -45,5 +45,4 @@ func SetupRoutes(app *fiber.App, conn *pgx.Conn) {
 
 	// DropTable: elimina toda la tabla "users"
 	app.Get("/db/drop", func(c *fiber.Ctx) error { return db.DropTable(conn) })
-
 }
