@@ -27,6 +27,9 @@ func SetupRoutes(app *fiber.App, conn *pgx.Conn) {
 	// Ruta para localizar un usuario aportando su "user_id"
 	app.Get("/db/find-user/:user_id", func(c *fiber.Ctx) error { return db.FindUserHandler(c, conn) })
 
+	// Ruta para mostrar toda la tabla "Users" por consola
+	app.Get("/db/fech-all", func(c *fiber.Ctx) error { return db.FetchAllData(conn) })
+
 	// ------------------------ Peticiones POST --------------------------------------------
 	app.Post("/db/create/user", func(c *fiber.Ctx) error { return db.CreateUser(c, conn) })
 
