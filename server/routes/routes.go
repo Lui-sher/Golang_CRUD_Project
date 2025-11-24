@@ -22,19 +22,19 @@ func SetupRoutes(app *fiber.App, conn *pgx.Conn) {
 	app.Get("/db", func(c *fiber.Ctx) error { return c.SendString("Aquí irán las operaciones con la base de datos") })
 
 	// Ruta para consultar el último registro ingresado en la tabla
-	app.Get("/db/last-record", func(c *fiber.Ctx) error { return db.LastRecordHandler(c, conn) })
+	app.Get("/users/last", func(c *fiber.Ctx) error { return db.LastRecordHandler(c, conn) })
 
 	// Ruta para localizar un usuario aportando su "user_id"
-	app.Get("/db/find-user/:user_id", func(c *fiber.Ctx) error { return db.FindUserHandler(c, conn) })
+	app.Get("/users/:id", func(c *fiber.Ctx) error { return db.FindUserHandler(c, conn) })
 
 	// Ruta para mostrar toda la tabla "Users" por consola
-	app.Get("/db/fech-all", func(c *fiber.Ctx) error { return db.FetchAllData(conn) })
+	app.Get("/users", func(c *fiber.Ctx) error { return db.FetchAllData(conn) })
 
 	// ------------------------ Peticiones POST --------------------------------------------
-	app.Post("/db/create/user", func(c *fiber.Ctx) error { return db.CreateUser(c, conn) })
+	app.Post("/users", func(c *fiber.Ctx) error { return db.CreateUser(c, conn) })
 
 	// -----------------------  Peticiones DELETE  ----------------------------------------
-	app.Delete("/db/delete-user/:user_id", func(c *fiber.Ctx) error { return db.DeleteUserHandler(c, conn) })
+	app.Delete("/users/:id", func(c *fiber.Ctx) error { return db.DeleteUserHandler(c, conn) })
 
 	// ------------------------ Testing Routes ---------------------------------------------
 	// PostTest: Crear 3 nuevos registros automaticamente

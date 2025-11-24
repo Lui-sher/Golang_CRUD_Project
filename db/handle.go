@@ -128,11 +128,11 @@ func CreateUser(c *fiber.Ctx, conn *pgx.Conn) error {
 // Funcion para encontar a user
 func FindUser(conn *pgx.Conn, userId string) (*models.User, error) {
 
-	query := "SELECT record, user_id, name, email FROM users WHERE user_id = $1;"
+	query := "SELECT record, user_id, name, email, is_test FROM users WHERE user_id = $1;"
 	rows := conn.QueryRow(context.Background(), query, userId)
 
 	var user models.User
-	err := rows.Scan(&user.Record, &user.User_Id, &user.Name, &user.Email)
+	err := rows.Scan(&user.Record, &user.User_Id, &user.Name, &user.Email, &user.Is_test)
 	if err != nil {
 		return nil, fmt.Errorf("error al obtener el usuario con user_id %s: %v", userId, err)
 	}
@@ -142,7 +142,7 @@ func FindUser(conn *pgx.Conn, userId string) (*models.User, error) {
 
 func FindUserHandler(c *fiber.Ctx, conn *pgx.Conn) error {
 
-	userId := c.Params("user_id")
+	userId := c.Params("id")
 	fmt.Println("Searching User_Id ", userId, "...")
 
 	user, err := FindUser(conn, userId)
@@ -161,7 +161,7 @@ func FindUserHandler(c *fiber.Ctx, conn *pgx.Conn) error {
 
 func DeleteUserHandler(c *fiber.Ctx, conn *pgx.Conn) error {
 
-	userId := c.Params("user_id")
+	userId := c.Params("id")
 	query := "DELETE FROM users WHERE user_id = $1 RETURNING record, user_id, name, email, is_test;"
 
 	var user models.User
